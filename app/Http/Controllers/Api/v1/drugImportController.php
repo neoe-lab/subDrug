@@ -68,6 +68,8 @@ class drugImportController extends Controller
             "created_at" => date('Y-m-d H:i:s'),
             "updated_at" => date('Y-m-d H:i:s')
         ]);
+        $qty_now_in_drug_inv = DB::table('drug_inv')->where('drug_id',$drug_id)->value('qty');
+        $update_drug_inv = DB::table('drug_inv')->where('drug_id',$drug_id)->update(["qty" => $qty_now_in_drug_inv + $qty ]);
 
         return response()->json([
             "status" => 1,
