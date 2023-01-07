@@ -20,8 +20,8 @@ return new class extends Migration
             $table->string('unit');
             $table->string('type')->nullable();
             $table->string('group')->nullable();
-            $table->string('icode');
-            $table->string('code1');
+            $table->string('icode')->unique();
+            $table->string('code1')->unique();
             $table->integer('packing')->unsigned();
             $table->string('ABC_analysis_type')->nullable();
             $table->string('VED_analysis_type')->nullable();
