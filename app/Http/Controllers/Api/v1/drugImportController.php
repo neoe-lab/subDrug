@@ -62,7 +62,7 @@ class drugImportController extends Controller
             "drug_name" => DB::table('drug_general')->where('code1',$request->drug_code)->value('drug_name'),
             "lot_no" => $request->lot_no,
             "qty" => $qty,
-            "price" => 20.88,
+            "price" => 0,
             "exp_date" => $request->exp_date,
             "add_by" => "system",
             "created_at" => date('Y-m-d H:i:s'),

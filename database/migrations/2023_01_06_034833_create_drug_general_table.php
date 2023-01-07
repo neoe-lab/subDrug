@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('ABC_analysis_type')->nullable();
             $table->string('VED_analysis_type')->nullable();
             $table->string('ed_list',1)->nullable();
-            $table->enum('status',['N','Y'])->default('N');
+            $table->enum('status',['N','Y'])->default('Y');
             $table->timestamps();
         });
     }
