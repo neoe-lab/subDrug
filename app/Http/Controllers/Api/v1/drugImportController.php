@@ -37,57 +37,75 @@ class drugImportController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
+    {   $account = "systemd";
         //validate
         $validate = $request->validate([
-            "drug_code1" => "required",
+            "code1" => "required",
             "lot_no" => 'required',
-            "qty" => 'required',
+            "qty" => 'required|numeric',
             "mode" => 'required',
             "exp_date" => 'required'
 
         ]);
+        // create data
+        if(DB::table('drug_general')->where('code1',$request->code1)->exists()){
 
-        if(DB::table('drug_general')->where('code1',$request->drug_code1)->exists()){
+            $drug_general = DB::table('drug_general')->where('code1',$request->code1);
+            $drug_inv = DB::table('drug_inv')->where('drug_id',$drug_general->value('id'));
+            $drug_inv_in_stock = $drug_inv->value('qty');
 
-            $drug_id = DB::table('drug_general')->where('code1',$request->drug_code1)->value('id');
-
-             if($request->mode == "pack"){
-            $packing = DB::table('drug_general')->where('id',$drug_id)->value('packing');
-            $qty = $request->qty * $packing;
+            if($request->mode == "pack"){
+                $packing = $drug_general->value('packing');
+                $qty = $request->qty * $packing;
 
             }elseif($request->mode === "unit"){
-            $qty = $request->qty;
+                $qty = $request->qty;
             }
 
-            $drug_import = DB::table('drug_import')->insert([
-                "drug_general_id" => $drug_id,
-                "drug_name" => DB::table('drug_general')->where('code1',$request->drug_code1)->value('drug_name'),
+            if($drug_inv->exists()){
+                $update_drug_inv = $drug_inv->update(["qty" => $drug_inv_in_stock + $qty ]);
+                $drug_import = DB::table('drug_import')->insert([
+                "drug_general_id" => $drug_general->value('id'),
+                "drug_name" => $drug_general->value('drug_name'),
                 "lot_no" => $request->lot_no,
                 "qty" => $qty,
                 "price" => 0,
                 "exp_date" => $request->exp_date,
-                "add_by" => "system",
-                "created_at" => date('Y-m-d H:i:s'),
-                "updated_at" => date('Y-m-d H:i:s')
-            ]);
-            $qty_now_in_drug_inv = DB::table('drug_inv')->where('drug_id',$drug_id)->value('qty');
-            $update_drug_inv = DB::table('drug_inv')->where('drug_id',$drug_id)->update(["qty" => $qty_now_in_drug_inv + $qty ]);
-            $history = DB::table('history')->insert([
-                "drug_general_id" => $drug_id,
-                "drug_name" => DB::table('drug_general')->where('code1',$request->drug_code1)->value('drug_name'),
-                "lot_no" => $request->lot_no,
-                "qty" => $qty,
-                "action" => "add-import",
-                "action_by" => "system",
-                "created_at" => date('Y-m-d H:i:s'),
-                "updated_at" => date("Y-m-d H:i:s")
-            ]);
+                "add_by" => $account,
+                "created_at" => now(),
+                "updated_at" => now()
+                ]);
+                $history = DB::table('history')->insert([
+                    "drug_general_id" => $drug_general->value('id'),
+                    "drug_name" => $drug_general->value('drug_name'),
+                    "lot_no" => $request->lot_no,
+                    "qty" => $qty,
+                    "action" => "add-import",
+                    "action_by" => $account,
+                    "created_at" => now(),
+                    "updated_at" => now()
+                ]);
 
-            return response()->json([
-            "status" => 1,
-            "message" => "drug import to invtory successfully"
-            ],200);
+                return response()->json([
+                    "status" => 1,
+                    "mode" => $request->mode,
+                    "drug_name" => $drug_general->value('drug_name'),
+                    "lot_no" => $request->lot_no,
+                    "qty_new" => $qty,
+                    "in_stock" => $drug_inv->value('qty'),
+                    "message" => "drug import to invtory successfully"
+                ],200);
+
+            }else{
+                return response()->json([
+                    "status" => 0,
+                    "message" => "not found drug in stock drug_inv"
+                ],404);
+            }
+
+
+
+
         }else{
             return response()->json([
                 "status" => 0,
@@ -130,8 +148,11 @@ class drugImportController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if(DB::table('drug_import')->where('id',$id)->exists()){
-            $drug_import = DB::table('drug_import')->find($id);
+        $drug_import = DB::table('drug_import')->where('id',$id);
+        if($drug_import->exists()){
+            $drug_general = DB::table('drug_general')->where('id',$drug_import->value('drug_general_id'));
+            $drug_inv = DB::table('drug_inv')->where('drug_id');
+
             $drug_general_id = DB::table('drug_general')->where('code1',$drug_import->drug_general_id)->value('id');
             $drug_inv = DB::table('drug_inv')->where('drug_id',$drug_general_id)->update([
                 "qty" => $drug_inv->qty - $drug_import->qty
@@ -139,7 +160,7 @@ class drugImportController extends Controller
 
             DB::table('drug_import')->where('id',$id)->update([
                 "drug_general_id" => $drug_general_id,
-                "drug_name" => DB::table('drug_general')->where('code1',$request->drug_code1)->value('drug_name'),
+                "drug_name" => DB::table('drug_general')->where('code1',$request->code1)->value('drug_name'),
                 "lot_no" => $request->lot_no,
                 "qty" => $qty,
                 "price" => 0,
