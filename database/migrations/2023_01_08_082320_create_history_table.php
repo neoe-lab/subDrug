@@ -13,15 +13,14 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('drug_alert', function (Blueprint $table) {
+        Schema::create('history', function (Blueprint $table) {
             $table->id();
             $table->string('drug_general_id');
-            $table->text('drug_name');
-            $table->integer('reorder_point')->unsigned();
-            $table->integer('safe_stock')->unsigned();
-            $table->integer('empty_stock')->unsigned();
-            $table->string('description')->nullable();
-            $table->enum('status',['N','Y'])->default('N');
+            $table->string('drug_name');
+            $table->string('lot_no');
+            $table->integer('qty');
+            $table->string('action');
+            $table->string('action_by');
             $table->timestamps();
         });
     }
@@ -33,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('drug_alert');
+        Schema::dropIfExists('history');
     }
 };

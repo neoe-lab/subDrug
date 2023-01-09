@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\drugGeneralController;
 use App\Http\Controllers\Api\v1\drugImportController;
-use App\Http\Controllers\Api\v1\testApi;
+use App\Http\Controllers\Api\v1\drugExportController;
 
 // use App\Http\Controllers\Api\v1\drugGeneralController;
 
@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\v1\testApi;
 */
 Route::resource('drug-general',drugGeneralController::class);
 Route::resource('drug-import',drugImportController::class);
+Route::resource('drug-export',drugExportController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });

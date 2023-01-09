@@ -73,6 +73,16 @@ class drugImportController extends Controller
             ]);
             $qty_now_in_drug_inv = DB::table('drug_inv')->where('drug_id',$drug_id)->value('qty');
             $update_drug_inv = DB::table('drug_inv')->where('drug_id',$drug_id)->update(["qty" => $qty_now_in_drug_inv + $qty ]);
+            $history = DB::table('history')->insert([
+                "drug_general_id" => $drug_id,
+                "drug_name" => DB::table('drug_general')->where('code1',$request->drug_code1)->value('drug_name'),
+                "lot_no" => $request->lot_no,
+                "qty" => $qty,
+                "action" => "add-import",
+                "action_by" => "system",
+                "created_at" => date('Y-m-d H:i:s'),
+                "updated_at" => date("Y-m-d H:i:s")
+            ]);
 
             return response()->json([
             "status" => 1,
@@ -165,6 +175,20 @@ class drugImportController extends Controller
             $drug_inv->update([
                 "qty" => $drug_inv->value('qty') - $drug_import->qty
             ]);
+            $history = DB::table('history')->insert([
+                "drug_general_id" => $drug_import->drug_general_id,
+                "drug_name" => $drug_import->drug_name,
+                "lot_no" => $drug_import->lot_no,
+                "qty" => $drug_import->qty,
+                "action" => "del-import",
+                "action_by" => "system",
+                "created_at" => date('Y-m-d H:i:s'),
+                "updated_at" => date("Y-m-d H:i:s")
+            ]);
+
+
+
+
             DB::table('drug_import')->where('id',$id)->delete();
             return response()->json([
                 "status" => 1,
