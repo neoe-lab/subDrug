@@ -48,9 +48,9 @@ class drugGeneralController extends Controller
             "unit" => "required",
             "type" => "required",
             "group" => "required",
-            "icode" => "required",
-            "code1" => "required",
-            "packing" => "required",
+            "icode" => "required|unique:drug_general",
+            "code1" => "required|unique:drug_general",
+            "packing" => "required|numeric",
             "abc_analysis_type" => "required",
             "ved_analysis_type" => "required",
             "ed_list" => "required",
@@ -79,7 +79,7 @@ class drugGeneralController extends Controller
         $drug_status = $drug_general->where('id', $drug_id)->value('status');
         if ($drug_status == 'Y') {
             DB::table('drug_inv')->insert([
-                "drug_id" => $drug_id,
+                "drug_general_id" => $drug_id,
                 "drug_name" => $drug_name,
                 "unit" =>  $drug_unit,
                 "qty" => 0,

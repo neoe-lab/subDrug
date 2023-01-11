@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('drug_inv', function (Blueprint $table) {
             $table->id();
-            $table->string('drug_id');
+            $table->string('drug_general_id');
             $table->string('drug_name');
             $table->string('unit');
             $table->integer('qty')->unsigned();

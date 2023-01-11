@@ -29,31 +29,30 @@ class drugExportController extends Controller
         $request->validate([
             "icode" => "required",
             "lot_no" => "required",
-            "qty" => "required",
+            "qty" => "required|numeric",
             "mode" => "required"
 
         ]);
 
         $drug_general = DB::table('drug_general')->where('icode',$request->icode);
+        $drug_inv = DB::table('drug_inv')->where('drug_general_id',$drug_general->value('id'));
         if($drug_general->exists()){
-            $drug_id = $drug_general->value('id');
             if($request->mode === "unit"){
                 $qty = $request->qty;
             }elseif($request->mode === "pack"){
-                $packing = DB::table('drug_general')->where('id',$drug_id)->value('packing');
+                $packing = $drug_general->value('packing');
                 $qty = $request->qty * $packing;
 
             }
-            $drug_name = DB::table('drug_general')->where('icode',$request->icode)->value('drug_name');
-            $drug_inv = DB::table('drug_inv')->where('drug_id',$drug_id);
             if($drug_inv->exists() && $qty <= $drug_inv->value('qty') ){
 
                 $drug_inv->update([
-                    "qty" => $drug_inv->value('qty') - $qty
+                    "qty" => $drug_inv->value('qty') - $qty,
+                    "updated_at" => now()
                 ]);
                 DB::table('drug_export')->insert([
-                "drug_general_id" => $drug_id,
-                "drug_name" => $drug_name,
+                "drug_general_id" => $drug_general->value('id'),
+                "drug_name" => $drug_general->value('drug_name'),
                 "lot_no" => $request->lot_no,
                 "qty" => $qty,
                 "price" => 0,
@@ -62,8 +61,8 @@ class drugExportController extends Controller
                 "updated_at" => now()
                 ]);
                 DB::table('history')->insert([
-                    "drug_general_id" => $drug_id,
-                    "drug_name" => $drug_name,
+                    "drug_general_id" => $drug_general->value('id'),
+                    "drug_name" => $drug_general->value('drug_name'),
                     "lot_no" => "000000",
                     "qty" => $qty,
                     "action" => "add-export",
@@ -75,7 +74,7 @@ class drugExportController extends Controller
                 return response()->json([
                 "status" => 1,
                 "mode" => $request->mode,
-                "drug_name" => $drug_name,
+                "drug_name" => $drug_general->value('drug_name'),
                 "qty_out" => $qty,
                 "in_stock" => $drug_inv->value('qty'),
                 "message" => "create drug export successfully"

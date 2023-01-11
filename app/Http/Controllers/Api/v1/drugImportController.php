@@ -44,14 +44,14 @@ class drugImportController extends Controller
             "lot_no" => 'required',
             "qty" => 'required|numeric',
             "mode" => 'required',
-            "exp_date" => 'required'
+            "exp_date" => 'required|date'
 
         ]);
         // create data
         if(DB::table('drug_general')->where('code1',$request->code1)->exists()){
 
             $drug_general = DB::table('drug_general')->where('code1',$request->code1);
-            $drug_inv = DB::table('drug_inv')->where('drug_id',$drug_general->value('id'));
+            $drug_inv = DB::table('drug_inv')->where('drug_general_id',$drug_general->value('id'));
             $drug_inv_in_stock = $drug_inv->value('qty');
 
             if($request->mode == "pack"){
@@ -63,7 +63,7 @@ class drugImportController extends Controller
             }
 
             if($drug_inv->exists()){
-                $update_drug_inv = $drug_inv->update(["qty" => $drug_inv_in_stock + $qty ]);
+                $update_drug_inv = $drug_inv->update(["qty" => $drug_inv_in_stock + $qty,"updated_at" => now() ]);
                 $drug_import = DB::table('drug_import')->insert([
                 "drug_general_id" => $drug_general->value('id'),
                 "drug_name" => $drug_general->value('drug_name'),
@@ -151,10 +151,9 @@ class drugImportController extends Controller
         $drug_import = DB::table('drug_import')->where('id',$id);
         if($drug_import->exists()){
             $drug_general = DB::table('drug_general')->where('id',$drug_import->value('drug_general_id'));
-            $drug_inv = DB::table('drug_inv')->where('drug_id');
+            $drug_inv = DB::table('drug_inv')->where('drug_general_id',$drug_general->value('id'));
 
-            $drug_general_id = DB::table('drug_general')->where('code1',$drug_import->drug_general_id)->value('id');
-            $drug_inv = DB::table('drug_inv')->where('drug_id',$drug_general_id)->update([
+            $drug_inv = DB::table('drug_inv')->where('drug_general_id',$drug_general_id)->update([
                 "qty" => $drug_inv->qty - $drug_import->qty
             ]);
 
@@ -192,7 +191,7 @@ class drugImportController extends Controller
     {
         if(DB::table('drug_import')->where('id',$id)->exists()){
             $drug_import = DB::table('drug_import')->find($id);
-            $drug_inv = DB::table('drug_inv')->where('drug_id',$drug_import->drug_general_id);
+            $drug_inv = DB::table('drug_inv')->where('drug_general_id',$drug_import->drug_general_id);
             $drug_inv->update([
                 "qty" => $drug_inv->value('qty') - $drug_import->qty
             ]);
